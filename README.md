@@ -7,6 +7,8 @@ The Lastest Release:
 + [Linux Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v1.0-alpha/cnki-downloader-linux.zip)
 + [Mac OSX Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v1.0-alpha/cnki-downloader-darwin.zip)
 
+**PS: 一次性回复，请使用最新的解压软件(7zip等)**
+
 # Usage
 Here is a gif picture, you can follow it, and it's really easy
 
