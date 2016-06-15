@@ -663,8 +663,6 @@ func (c *CNKIDownloader) getInfoURL(instance string) (string, error) {
 	// prepare
 	//
 	url := fmt.Sprintf(queryURL, v[0], v[1])
-	fmt.Println(url)
-
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "", err
@@ -705,12 +703,13 @@ func (c *CNKIDownloader) Download(paper *Article) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Println(url)
+	fmt.Println("Information url confirmed")
 
 	info, err := c.getInfo(url)
 	if err != nil {
 		return "", err
 	}
+	fmt.Println("Resource information confirmed")
 
 	if len(info.DownloadUrl) == 0 || len(info.Filename) == 0 {
 		return "", fmt.Errorf("Invalid file information")
@@ -720,9 +719,9 @@ func (c *CNKIDownloader) Download(paper *Article) (string, error) {
 	if err != nil {
 		return "", nil
 	}
-	fullName := fmt.Sprintf("%s\\%s", currentDir, info.Filename)
-	fmt.Println(fullName)
+	fullName := fmt.Sprintf("%s%c%s", currentDir, os.PathSeparator, info.Filename)
 
+	fmt.Printf("Downloading... total (%d) bytes\n", info.Size)
 	err = c.getFile(info.DownloadUrl[0], fullName, info.Size)
 	if err != nil {
 		return "", err
