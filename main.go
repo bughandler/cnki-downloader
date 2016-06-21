@@ -553,47 +553,77 @@ func (c *CNKIDownloader) SearchStop() {
 // download file
 //
 func (c *CNKIDownloader) getFile(url string, filename string, filesize int) error {
+	var (
+		success bool = false
+	)
 
+	//
+	// create a file
+	//
 	output, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
-	defer output.Close()
+
+	defer func() {
+		output.Close()
+		if !success {
+			os.Remove(filename)
+		}
+	}()
 
 	//
 	// prepare
 	//
 	furl := strings.Replace(url, "cnki://", "http://", 1)
-	req, err := http.NewRequest("GET", furl, nil)
-	if err != nil {
-		return err
+
+	for offset := 0; offset < filesize; {
+
+		partOfData := false
+
+		req, err := http.NewRequest("GET", furl, nil)
+		if err != nil {
+			return err
+		}
+
+		//req.Header.Set("Accept-Range", fmt.Sprintf("bytes=%d-%d", offset, filesize))
+		req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, filesize-1))
+		req.Header.Set("User-Agent", "libghttp")
+
+		//
+		// do reuqest
+		//
+		resp, err := c.http_client.Do(req)
+		if err != nil {
+			return err
+		}
+		fmt.Println("responsed, status ", resp.StatusCode, resp.ContentLength)
+
+		if resp.StatusCode == 206 {
+			// get part of data
+			partOfData = true
+		} else if resp.StatusCode != 200 {
+			// download failure
+			return fmt.Errorf("Response : %s", resp.Status)
+		}
+
+		n, err := io.Copy(output, resp.Body)
+		if err != nil {
+			return err
+		}
+		offset += int(n)
+
+		fmt.Printf("%d/%d\n", offset, filesize)
+
+		//
+		// if server response with http 200
+		//
+		if !partOfData && offset != filesize {
+			return fmt.Errorf("Unmatched download size %d/%d", n, filesize)
+		}
 	}
 
-	req.Header.Set("Accept-Range", fmt.Sprintf("bytes=0-%d", filesize))
-	req.Header.Set("Range", fmt.Sprintf("bytes=0-%d", filesize))
-	req.Header.Set("User-Agent", "libghttp")
-
-	//
-	// do reuqest
-	//
-	resp, err := c.http_client.Do(req)
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("Response : %s", resp.Status)
-	}
-
-	n, err := io.Copy(output, resp.Body)
-	if err != nil {
-		return err
-	}
-
-	if int(n) != filesize {
-		return fmt.Errorf("Unmatched download size %d/%d", n, filesize)
-	}
-
+	success = true
 	return nil
 }
 
