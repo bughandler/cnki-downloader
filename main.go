@@ -11,11 +11,15 @@ import (
 	"fmt"
 	"github.com/axgle/mahonia"
 	"github.com/fatih/color"
+	"gopkg.in/cheggaaa/pb.v1"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -84,6 +88,27 @@ type CNKIDownloader struct {
 	search_cache cnkiSearchCache
 	http_client  *http.Client
 }
+
+type appUpdateInfo struct {
+	Major       int      `json:"major"`
+	Minor       int      `json:"minor"`
+	ReleaseTime string   `json:"time"`
+	IsAlpha     bool     `json:"is_alpha"`
+	IsRequired  bool     `json:"is_required"`
+	Reasons     []string `json:"reasons"`
+	Url         struct {
+		Windows string `json:"win"`
+		Linux   string `json:"linux"`
+		Mac     string `json:"mac"`
+	} `json:"urls"`
+}
+
+const (
+	MajorVersion    = 0
+	MinorVersion    = 3
+	VersionString   = "0.3-alpha"
+	VersionCheckUrl = "http://localhost:9090/last-release.json"
+)
 
 const (
 	SearchBySubject = SearchType(1 + iota)
@@ -576,10 +601,14 @@ func (c *CNKIDownloader) getFile(url string, filename string, filesize int) erro
 	// prepare
 	//
 	furl := strings.Replace(url, "cnki://", "http://", 1)
+	bar := pb.New(filesize)
+	bar.SetWidth(70)
+	bar.SetMaxWidth(80)
+	bar.Start()
 
 	for offset := 0; offset < filesize; {
 
-		partOfData := false
+		isPartOfData := false
 
 		req, err := http.NewRequest("GET", furl, nil)
 		if err != nil {
@@ -587,7 +616,7 @@ func (c *CNKIDownloader) getFile(url string, filename string, filesize int) erro
 		}
 
 		//req.Header.Set("Accept-Range", fmt.Sprintf("bytes=%d-%d", offset, filesize))
-		req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, filesize-1))
+		req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, filesize))
 		req.Header.Set("User-Agent", "libghttp")
 
 		//
@@ -597,31 +626,37 @@ func (c *CNKIDownloader) getFile(url string, filename string, filesize int) erro
 		if err != nil {
 			return err
 		}
-		fmt.Println("responsed, status ", resp.StatusCode, resp.ContentLength)
+		//fmt.Println("responsed, status ", resp.StatusCode, resp.ContentLength)
 
 		if resp.StatusCode == 206 {
-			// get part of data
-			partOfData = true
+			isPartOfData = true
 		} else if resp.StatusCode != 200 {
-			// download failure
 			return fmt.Errorf("Response : %s", resp.Status)
 		}
 
-		n, err := io.Copy(output, resp.Body)
-		if err != nil {
-			return err
-		}
-		offset += int(n)
+		for {
+			n, err := io.CopyN(output, resp.Body, 2048)
 
-		fmt.Printf("%d/%d\n", offset, filesize)
+			if n > 0 {
+				offset += int(n)
+				bar.Add(int(n))
+			}
+
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				return err
+			}
+		}
 
 		//
 		// if server response with http 200
 		//
-		if !partOfData && offset != filesize {
-			return fmt.Errorf("Unmatched download size %d/%d", n, filesize)
+		if !isPartOfData && offset != filesize {
+			return fmt.Errorf("Unmatched download size %d/%d", offset, filesize)
 		}
 	}
+	bar.Finish()
 
 	success = true
 	return nil
@@ -733,13 +768,13 @@ func (c *CNKIDownloader) Download(paper *Article) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Println("Information url confirmed")
+	fmt.Println("Document info url confirmed")
 
 	info, err := c.getInfo(url)
 	if err != nil {
 		return "", err
 	}
-	fmt.Println("Resource information confirmed")
+	fmt.Println("Document information confirmed")
 
 	if len(info.DownloadUrl) == 0 || len(info.Filename) == 0 {
 		return "", fmt.Errorf("Invalid file information")
@@ -749,7 +784,8 @@ func (c *CNKIDownloader) Download(paper *Article) (string, error) {
 	if err != nil {
 		return "", nil
 	}
-	fullName := fmt.Sprintf("%s%c%s", currentDir, os.PathSeparator, info.Filename)
+	fullName := filepath.Join(currentDir, info.Filename)
+	//fullName := fmt.Sprintf("%s%c%s", currentDir, os.PathSeparator, info.Filename)
 
 	fmt.Printf("Downloading... total (%d) bytes\n", info.Size)
 	err = c.getFile(info.DownloadUrl[0], fullName, info.Size)
@@ -771,13 +807,16 @@ func printArticles(page int, articles []Article) {
 			source = "N/A"
 		}
 		fmt.Fprintf(color.Output, "%s: %s (%s)\n",
-			color.CyanString("%d", id+1),
+			color.CyanString("%02d", id+1),
 			color.WhiteString(entry.Information.Title),
 			color.YellowString("%s", source))
 	}
 	fmt.Fprintf(color.Output, "-----------------------------------------------------------(%s)--\n\n", color.MagentaString("page%d", page))
 }
 
+//
+// required for serach options
+//
 func getSearchOpt() (SearchType, FilterType) {
 	var (
 		search SearchType = SearchBySubject
@@ -790,7 +829,7 @@ func getSearchOpt() (SearchType, FilterType) {
 			fmt.Fprintf(color.Output, "\t %s: %s\n", color.CyanString("%d", k), searchFilterHints[k])
 		}
 
-		fmt.Fprintf(color.Output, "$ %s", color.YellowString("select: "))
+		fmt.Fprintf(color.Output, "$ %s", color.CyanString("select: "))
 		s := getInputString()
 		if len(s) > 0 {
 			selected, err := strconv.ParseInt(s, 16, 32)
@@ -809,35 +848,180 @@ func getSearchOpt() (SearchType, FilterType) {
 }
 
 //
+// query application update information
+//
+func getUpdateInfo() (*appUpdateInfo, error) {
+	resp, err := http.Get(VersionCheckUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("Response : %s", resp.Status)
+	}
+
+	//
+	// parse response data
+	//
+	respData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &appUpdateInfo{}
+
+	err = json.Unmarshal(respData, result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+//
+// try to update
+//
+func update() (allowContinue bool) {
+
+	allowContinue = true
+	fmt.Println("** Checking update information current: ", VersionString)
+
+	//
+	// http query the information
+	//
+	info, err := getUpdateInfo()
+	if err == nil {
+		newVersion := false
+		if info.Major > MajorVersion || info.Minor > MinorVersion {
+			newVersion = true
+		}
+
+		if newVersion {
+			//
+			// show version information
+			//
+			verName := ""
+			if info.IsAlpha {
+				verName = fmt.Sprintf("%d.%d-alpha", info.Major, info.Minor)
+			} else {
+				verName = fmt.Sprintf("%d.%d-release", info.Major, info.Minor)
+			}
+
+			fmt.Fprintf(color.Output, "\t* version: %s\n", color.GreenString(verName))
+			fmt.Fprintf(color.Output, "\t*    time: %s\n", color.WhiteString(info.ReleaseTime))
+			if len(info.Reasons) > 0 {
+				for i, v := range info.Reasons {
+					if i == 0 {
+						fmt.Fprintf(color.Output, "\t*  update: - %s\n", color.WhiteString(v))
+					} else {
+						fmt.Fprintf(color.Output, "\t*          - %s\n", color.WhiteString(v))
+					}
+				}
+			} else {
+				fmt.Fprintf(color.Output, "\t*  update: unknown\n")
+			}
+
+			if info.IsRequired {
+				fmt.Fprintf(color.Output, "** You %s update this version, or you cannot continue to use current program\n", color.RedString("have to"))
+			} else {
+				fmt.Println("** This version is not nacessary to be update, but I recommand you to update now")
+			}
+
+			fmt.Printf("** update now? [y/n]: ")
+			s := getInputString()
+			if strings.ToLower(s) != "y" {
+				//
+				// choose to skip
+				//
+				allowContinue = !info.IsRequired
+			} else {
+				//
+				// choose to update
+				//
+				switch runtime.GOOS {
+				case "windows":
+					{
+						// rundll32 url.dll,FileProtocolHandler target-url
+						runDll32 := filepath.Join(os.Getenv("SYSTEMROOT"), "System32", "rundll32.exe")
+						cmd := exec.Command(runDll32, "url.dll,FileProtocolHandler", info.Url.Windows)
+						cmd.Start()
+					}
+				case "darwin":
+					{
+						cmd := exec.Command("open", info.Url.Mac)
+						cmd.Run()
+					}
+				case "linux":
+					{
+						fmt.Fprintf(color.Output, "** url: %s \n", color.RedString(info.Url.Linux))
+					}
+				}
+				allowContinue = false
+			}
+
+		} else {
+			fmt.Println("** alreay is the last version")
+		}
+
+	} else {
+		fmt.Fprintf(color.Output, "** Check %s : %s \n", color.RedString("failure"), err.Error())
+	}
+
+	return
+}
+
+//
 // lord commander
 //
 func main() {
 	color.Cyan("***************************************************************************\n")
 	color.Cyan("****  Welcome use CNKI-Downloader, Let's fuck these knowledge mongers  ****\n")
 	color.Cyan("****                            Good luck.                             ****\n")
+	color.Cyan("****                                                                   ****\n")
 	color.Cyan("***************************************************************************\n")
 
 	defer func() {
-		color.Yellow("Bye.\n")
+		color.Yellow("** Bye.\n")
 	}()
 
+	//
+	// note
+	//
+	fmt.Println()
+	fmt.Println("** NOTE: if you cannot download any document, maybe the service of")
+	fmt.Println("**       CNKI is unavailable again, in this situation, nothing ")
+	fmt.Println("**       we can do but wait, please do not open a issue on GitHub, thanks")
+	fmt.Println("**")
+
+	//
+	// update
+	//
+	v := update()
+	if !v {
+		return
+	}
+
+	//
+	// login
+	//
 	downloader := &CNKIDownloader{
 		username:    "voidpointer",
 		password:    "voidpointer",
 		http_client: &http.Client{},
 	}
 
+	fmt.Printf("** Login...")
 	err := downloader.Auth()
 	if err != nil {
-		fmt.Fprintf(color.Output, "Login %s : %s \n", color.RedString("Failure"), err.Error())
+		fmt.Fprintf(color.Output, "%s : %s \n", color.RedString("Failure"), err.Error())
 		return
+	} else {
+		fmt.Fprintf(color.Output, "%s\n\n", color.GreenString("Success"))
 	}
-
-	fmt.Fprintf(color.Output, "Login %s\n", color.GreenString("Success"))
 
 	for {
 
-		fmt.Fprintf(color.Output, "$ %s", color.YellowString("input anything you wanna search: "))
+		fmt.Fprintf(color.Output, "$ %s", color.CyanString("input anything you wanna search: "))
 
 		s := getInputString()
 		if len(s) == 0 {
@@ -871,7 +1055,7 @@ func main() {
 			}
 
 			psize, pindex, pcount := ctx.GetPageInfo()
-			fmt.Fprintf(color.Output, "$ [%d/%d] %s", pindex, pcount, color.YellowString("command: "))
+			fmt.Fprintf(color.Output, "$ [%d/%d] %s", pindex, pcount, color.CyanString("command: "))
 
 			s = getInputString()
 			cmd_parts := strings.Split(s, " ")
@@ -883,7 +1067,7 @@ func main() {
 					fmt.Fprintf(color.Output, "\t %s: turn to next page\n", color.YellowString("NEXT"))
 					fmt.Fprintf(color.Output, "\t %s: turn to previous page\n", color.YellowString("PREV"))
 					fmt.Fprintf(color.Output, "\t  %s: (GET ID), download the specified item in this page, eg: GET 1, GET 14...etc\n", color.YellowString("GET"))
-					fmt.Fprintf(color.Output, "\t  %s: (SHOW ID), download the specified item in this page, eg: SHOW 2, SHOW 9...etc\n", color.YellowString("SHOW"))
+					fmt.Fprintf(color.Output, "\t %s: (SHOW ID), show the information about specified item, eg: SHOW 2, SHOW 9...etc\n", color.YellowString("SHOW"))
 					fmt.Fprintf(color.Output, "\t%s: break out, and search the other papers\n", color.YellowString("BREAK"))
 				}
 			case "info":
@@ -976,7 +1160,7 @@ func main() {
 						break
 					}
 
-					fmt.Fprintf(color.Output, "Download success to (%s) \n", color.GreenString(path))
+					fmt.Fprintf(color.Output, "Download success (%s) \n", color.GreenString(path))
 				}
 			case "break":
 				{
