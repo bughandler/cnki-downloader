@@ -107,7 +107,7 @@ const (
 	MajorVersion    = 0
 	MinorVersion    = 3
 	VersionString   = "0.3-alpha"
-	VersionCheckUrl = "http://localhost:9090/last-release.json"
+	VersionCheckUrl = "https://raw.githubusercontent.com/amyhaber/cnki-downloader/master/last-release.json"
 )
 
 const (
