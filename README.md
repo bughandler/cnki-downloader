@@ -1,5 +1,11 @@
 # Overview
-This is free downloader for CNKI, you can SEARCH, DOWNLOAD papers , journals, conference records in *.caj format
+This is free downloader for CNKI, you can search, download papers , journals, conference records in caj/kdh/.. formats (that 
+means you should use **CAJViewer** to open the document).
+
+BTW:
+- *read the [notice](https://github.com/amyhaber/cnki-downloader#notice) before you get start*
+- *no matter what this project always will die*
+- *star please* :)
 
 # Download
 The Last Release (2016-6-21):
