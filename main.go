@@ -153,10 +153,7 @@ func getInputString() string {
 		return ""
 	}
 
-	if s[len(s)-2] == '\r' {
-		return string(s[0 : len(s)-2])
-	}
-	return string(s[0 : len(s)-1])
+	return strings.TrimSpace(s)
 }
 
 //
