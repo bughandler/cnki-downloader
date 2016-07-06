@@ -108,8 +108,8 @@ type appUpdateInfo struct {
 
 const (
 	MajorVersion      = 0
-	MinorVersion      = 4
-	VersionString     = "0.4-alpha"
+	MinorVersion      = 5
+	VersionString     = "0.5-alpha"
 	VersionCheckUrl   = "https://raw.githubusercontent.com/amyhaber/cnki-downloader/master/last-release.json"
 	MaxDownloadThread = 4
 )
