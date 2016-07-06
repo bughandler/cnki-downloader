@@ -1,16 +1,18 @@
 {
 	"major": 0,
-	"minor": 4,
+	"minor": 5,
 	"is_alpha": true,
 	"is_required": true,
-	"time": "2016-7-6 16:08",
+	"time": "2016-7-6 18:15",
 	"reasons":[
 		"multi-thread download (nx speed UP)",
-		"fix a string operation bug"
+		"fix a string operation bug",
+		"Emergency fix a bug when writing data into disk, and update to v0.5-alpha",
+		"sorry for my lazy to test :("
 	],
 	"urls": {
-		"win": "https://github.com/amyhaber/cnki-downloader/releases/download/v0.4-alpha/cnki-downloader-windows.zip",
-		"mac": "https://github.com/amyhaber/cnki-downloader/releases/download/v0.4-alpha/cnki-downloader-darwin.zip",
-		"linux":"https://github.com/amyhaber/cnki-downloader/releases/download/v0.4-alpha/cnki-downloader-linux.zip"
+		"win": "https://github.com/amyhaber/cnki-downloader/releases/download/v0.5-alpha/cnki-downloader-windows.zip",
+		"mac": "https://github.com/amyhaber/cnki-downloader/releases/download/v0.5-alpha/cnki-downloader-darwin.zip",
+		"linux":"https://github.com/amyhaber/cnki-downloader/releases/download/v0.5-alpha/cnki-downloader-linux.zip"
 	}
 }

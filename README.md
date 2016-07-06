@@ -8,10 +8,10 @@ BTW:
 - *star please* :)
 
 # Download
-The Last Release (2016-7-6):
-+ [Windows Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v0.4-alpha/cnki-downloader-windows.zip)
-+ [Linux Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v0.4-alpha/cnki-downloader-linux.zip)
-+ [Mac Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v0.4-alpha/cnki-downloader-darwin.zip)
+The Last Release (2016-7-6 v0.5-alpha):
++ [Windows Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v0.5-alpha/cnki-downloader-windows.zip)
++ [Linux Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v0.5-alpha/cnki-downloader-linux.zip)
++ [Mac Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v0.5-alpha/cnki-downloader-darwin.zip)
 
 **PS: 一次性回复，请使用最新的解压软件(7zip等)**
 
