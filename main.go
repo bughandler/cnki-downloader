@@ -584,9 +584,14 @@ func (c *CNKIDownloader) getFile(url string, filename string, filesize int) erro
 	)
 
 	//
-	// create a file
+	// create a file with reserved disk space
 	//
 	output, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+
+	_, err = output.Write(make([]byte, filesize))
 	if err != nil {
 		return err
 	}
@@ -703,7 +708,7 @@ func (c *CNKIDownloader) getFile(url string, filename string, filesize int) erro
 			//
 			// flush into disk
 			//
-			data.WriteTo(file)
+			file.WriteAt(data.Bytes(), int64(from))
 			file.Sync()
 
 		}(fromOff, endOff, output, bar, &isErrorOccurred, occuredError, waitDone)
