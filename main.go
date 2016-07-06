@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"container/list"
 	"crypto/sha1"
 	"encoding/base64"
@@ -22,6 +23,8 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -104,10 +107,11 @@ type appUpdateInfo struct {
 }
 
 const (
-	MajorVersion    = 0
-	MinorVersion    = 3
-	VersionString   = "0.3-alpha"
-	VersionCheckUrl = "https://raw.githubusercontent.com/amyhaber/cnki-downloader/master/last-release.json"
+	MajorVersion      = 0
+	MinorVersion      = 3
+	VersionString     = "0.3-alpha"
+	VersionCheckUrl   = "https://raw.githubusercontent.com/amyhaber/cnki-downloader/master/last-release.json"
+	MaxDownloadThread = 4
 )
 
 const (
@@ -603,57 +607,120 @@ func (c *CNKIDownloader) getFile(url string, filename string, filesize int) erro
 	bar.SetMaxWidth(80)
 	bar.Start()
 
-	for offset := 0; offset < filesize; {
+	//
+	// calculate
+	//
+	blockSize := filesize / MaxDownloadThread
+	blockRemain := filesize % MaxDownloadThread
+	waitDone := new(sync.WaitGroup)
 
-		isPartOfData := false
+	//
+	// ready for receiving error that occurred by goroutines
+	//
+	isErrorOccurred := int32(0)
+	occuredError := fmt.Errorf("")
 
-		req, err := http.NewRequest("GET", furl, nil)
-		if err != nil {
-			return err
+	for i := 0; i < MaxDownloadThread; i++ {
+
+		fromOff := i * blockSize
+		endOff := (i + 1) * blockSize
+
+		if i == MaxDownloadThread-1 {
+			endOff += blockRemain
 		}
 
-		//req.Header.Set("Accept-Range", fmt.Sprintf("bytes=%d-%d", offset, filesize))
-		req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, filesize))
-		req.Header.Set("User-Agent", "libghttp")
+		waitDone.Add(1)
 
 		//
-		// do reuqest
+		// download part of data with a new goroutine
 		//
-		resp, err := c.http_client.Do(req)
-		if err != nil {
-			return err
-		}
-		//fmt.Println("responsed, status ", resp.StatusCode, resp.ContentLength)
+		go func(from, to int, file *os.File, progress *pb.ProgressBar, errorIndicator *int32, errorReceiver error, waitEvent *sync.WaitGroup) {
+			defer waitEvent.Done()
 
-		if resp.StatusCode == 206 {
-			isPartOfData = true
-		} else if resp.StatusCode != 200 {
-			return fmt.Errorf("Response : %s", resp.Status)
-		}
-
-		for {
-			n, err := io.CopyN(output, resp.Body, 2048)
-
-			if n > 0 {
-				offset += int(n)
-				bar.Add(int(n))
+			//
+			// new request
+			//
+			req, err := http.NewRequest("GET", furl, nil)
+			if err != nil {
+				if atomic.CompareAndSwapInt32(errorIndicator, 0, 1) {
+					errorReceiver = err
+				}
+				return
 			}
 
-			if err == io.EOF {
-				break
-			} else if err != nil {
-				return err
-			}
-		}
+			req.Header.Set("Accept-Range", fmt.Sprintf("bytes=%d-%d", from, to))
+			req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", from, to))
+			req.Header.Set("User-Agent", "libghttp/1.0")
 
-		//
-		// if server response with http 200
-		//
-		if !isPartOfData && offset != filesize {
-			return fmt.Errorf("Unmatched download size %d/%d", offset, filesize)
-		}
+			//
+			// do reuqest
+			//
+			resp, err := c.http_client.Do(req)
+			if err != nil {
+				if atomic.CompareAndSwapInt32(errorIndicator, 0, 1) {
+					errorReceiver = err
+				}
+				return
+			}
+
+			//
+			// check status code
+			//
+			if resp.StatusCode != 200 && resp.StatusCode != 206 {
+				err = fmt.Errorf("Invalid response code(%d) when download (%d-%d)", resp.StatusCode, from, to)
+				if atomic.CompareAndSwapInt32(errorIndicator, 0, 1) {
+					errorReceiver = err
+				}
+				return
+			}
+
+			//
+			// read data
+			//
+			data := new(bytes.Buffer)
+			data.Grow(to - from + 1)
+
+			for {
+				if *errorIndicator == 1 {
+					return
+				}
+
+				n, err := io.CopyN(data, resp.Body, 4096)
+				if n > 0 {
+					progress.Add(int(n))
+				}
+
+				if err == io.EOF {
+					break
+				} else if err != nil {
+					if atomic.CompareAndSwapInt32(errorIndicator, 0, 1) {
+						errorReceiver = err
+					}
+					return
+				}
+			}
+
+			//
+			// flush into disk
+			//
+			data.WriteTo(file)
+			file.Sync()
+
+		}(fromOff, endOff, output, bar, &isErrorOccurred, occuredError, waitDone)
 	}
+
+	//
+	// wait all goroutines to exit
+	//
+	waitDone.Wait()
 	bar.Finish()
+
+	//
+	// detect if there occurred some errors
+	//
+	if isErrorOccurred == 1 {
+		return occuredError
+	}
 
 	success = true
 	return nil
@@ -673,7 +740,7 @@ func (c *CNKIDownloader) getInfo(url string) (*CNKIArticleInfo, error) {
 	}
 
 	req.Header.Set("Request-Action", "FileInfo")
-	req.Header.Set("User-Agent", "Apache-HttpClient/UNAVAILABLE (java 1.4)")
+	req.Header.Set("User-Agent", "libghttp/1.0")
 
 	//
 	// do reuqest
@@ -957,7 +1024,7 @@ func update() (allowContinue bool) {
 			}
 
 		} else {
-			fmt.Println("** alreay is the last version")
+			fmt.Println("** already is the last version")
 		}
 
 	} else {
