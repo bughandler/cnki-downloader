@@ -8,7 +8,7 @@ BTW:
 - *star please* :)
 
 # Download
-The Last Release (2016-7-6 v0.5-alpha):
+The Last Release (2016-7-6 **v0.5-alpha**):
 + [Windows Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v0.5-alpha/cnki-downloader-windows.zip)
 + [Linux Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v0.5-alpha/cnki-downloader-linux.zip)
 + [Mac Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v0.5-alpha/cnki-downloader-darwin.zip)
