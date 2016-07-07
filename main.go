@@ -174,6 +174,28 @@ func gbk2utf8(charset string, r io.Reader) (io.Reader, error) {
 }
 
 //
+// detect a document is PDF format or not
+//
+func isPDFDocument(fileName string) bool {
+	file, err := os.Open(fileName)
+	if err != nil {
+		return false
+	}
+	defer file.Close()
+
+	b := make([]byte, 4)
+	_, err = file.Read(b)
+	if err != nil {
+		return false
+	}
+
+	if string(b) == "%PDF" {
+		return true
+	}
+	return false
+}
+
+//
 // analyze properties and set fields
 //
 func (a *Article) analyze() {
@@ -854,12 +876,19 @@ func (c *CNKIDownloader) Download(paper *Article) (string, error) {
 		return "", nil
 	}
 	fullName := filepath.Join(currentDir, info.Filename)
-	//fullName := fmt.Sprintf("%s%c%s", currentDir, os.PathSeparator, info.Filename)
 
 	fmt.Printf("Downloading... total (%d) bytes\n", info.Size)
 	err = c.getFile(info.DownloadUrl[0], fullName, info.Size)
 	if err != nil {
 		return "", err
+	}
+
+	if isPDFDocument(fullName) {
+		s := strings.Replace(fullName, filepath.Ext(fullName), ".pdf", 1)
+		err = os.Rename(fullName, s)
+		if err == nil {
+			return s, nil
+		}
 	}
 
 	return fullName, nil
