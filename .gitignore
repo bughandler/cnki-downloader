@@ -31,3 +31,4 @@ build
 temporary
 rcdata
 ipch
+*.exe
