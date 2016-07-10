@@ -107,11 +107,12 @@ type appUpdateInfo struct {
 }
 
 const (
-	MajorVersion      = 0
-	MinorVersion      = 5
-	VersionString     = "0.5-alpha"
-	VersionCheckUrl   = "https://raw.githubusercontent.com/amyhaber/cnki-downloader/master/last-release.json"
-	MaxDownloadThread = 4
+	MajorVersion         = 0
+	MinorVersion         = 5
+	VersionString        = "0.5-alpha"
+	VersionCheckUrl      = "https://raw.githubusercontent.com/amyhaber/cnki-downloader/master/last-release.json"
+	FixedDownloadViewUrl = "https://github.com/amyhaber/cnki-downloader#download"
+	MaxDownloadThread    = 4
 )
 
 const (
@@ -1051,9 +1052,11 @@ func update() (allowContinue bool) {
 					}
 				case "linux":
 					{
-						fmt.Fprintf(color.Output, "** url: %s \n", color.RedString(info.Url.Linux))
+						//fmt.Fprintf(color.Output, "** url: %s \n", color.RedString(info.Url.Linux))
 					}
 				}
+				fmt.Println("** if your browser couldn't be opened, please visit the project page to download:")
+				fmt.Fprintf(color.Output, "** --> %s \n", color.GreenString(FixedDownloadViewUrl))
 				allowContinue = false
 			}
 
