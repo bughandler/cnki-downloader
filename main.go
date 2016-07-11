@@ -28,9 +28,6 @@ import (
 	"time"
 )
 
-type FilterType int16
-type SearchType int16
-
 type CNKIArticleInfo struct {
 	DownloadUrl []string `xml:"server>cluster>url"`
 	DocInfo     string   `xml:"document>docInfo"`
@@ -74,10 +71,15 @@ type CNKISearchResult struct {
 	entries_count  int
 }
 
+type searchOption struct {
+	filter  string
+	databse string
+	order   string
+}
+
 type cnkiSearchCache struct {
 	keyword     string
-	stype       SearchType
-	sfilter     FilterType
+	option      *searchOption
 	result_list *list.List
 	current     *list.Element
 }
@@ -116,35 +118,70 @@ const (
 )
 
 const (
-	SearchBySubject = SearchType(1 + iota)
-	SearchByKeyword
+	SearchBySubject = int8(1 + iota)
+	SearchByAbstract
 	SearchByAuthor
-	SearchByContent
+	SearchByKeyword
 )
 
 const (
-	SearchFilterAll = FilterType(1 + iota)
+	SearchAllDoc = int8(1 + iota)
 	SearchJournal
-	SearchPhdPaper
+	SearchDoctorPaper
 	SearchMasterPaper
 	SearchConference
 )
 
+const (
+	OrderByDownloadedTime = int8(1 + iota)
+	OrderByRefCount
+	OrderByPublishTime
+	OrderBySubject
+)
+
 var (
-	searchFilterHints map[FilterType]string = map[FilterType]string{
-		SearchFilterAll:   "All (Default)",
+	searchFilterHints map[int8]string = map[int8]string{
+		SearchBySubject:  "A subject",
+		SearchByAbstract: "Content of abstract",
+		SearchByAuthor:   "Author's name",
+		SearchByKeyword:  "Just a keyword",
+	}
+
+	searchRangeHints map[int8]string = map[int8]string{
+		SearchAllDoc:      "All documents",
 		SearchJournal:     "Journals only",
-		SearchPhdPaper:    "Phd degree paper only",
+		SearchDoctorPaper: "Doctor degree paper only",
 		SearchMasterPaper: "Master degree paper only",
 		SearchConference:  "Conferences only",
 	}
 
-	searchFilterPaths map[FilterType]string = map[FilterType]string{
-		SearchFilterAll:   "/data/literatures",
+	searchOrderHints map[int8]string = map[int8]string{
+		OrderByDownloadedTime: "Downloaded count",
+		OrderByRefCount:       "Reference count",
+		OrderByPublishTime:    "Publish time",
+		OrderBySubject:        "Subject relative",
+	}
+
+	searchFilterDefs map[int8]string = map[int8]string{
+		SearchBySubject:  "dc:title",
+		SearchByAbstract: "dc:description",
+		SearchByAuthor:   "dc:creator",
+		SearchByKeyword:  "dc:title",
+	}
+
+	searchRangeDefs map[int8]string = map[int8]string{
+		SearchAllDoc:      "/data/literatures",
 		SearchJournal:     "/data/journals",
-		SearchPhdPaper:    "/data/doctortheses",
+		SearchDoctorPaper: "/data/doctortheses",
 		SearchMasterPaper: "/data/mastertheses",
 		SearchConference:  "/data/conferences",
+	}
+
+	searchOrderDefs map[int8]string = map[int8]string{
+		OrderByDownloadedTime: "cnki:downloadedtime",
+		OrderByRefCount:       "cnki:citedtime",
+		OrderByPublishTime:    "cnki:year",
+		OrderBySubject:        "dc:title",
 	}
 )
 
@@ -159,19 +196,6 @@ func getInputString() string {
 	}
 
 	return strings.TrimSpace(s)
-}
-
-//
-// input a reader(gbk), output a reader(utf-8)
-//
-func gbk2utf8(charset string, r io.Reader) (io.Reader, error) {
-	if charset != "gb2312" {
-		return nil, fmt.Errorf("Unsupported charset")
-	}
-
-	decoder := mahonia.NewDecoder("gbk")
-	reader := decoder.NewReader(r)
-	return reader, nil
 }
 
 //
@@ -194,6 +218,19 @@ func isPDFDocument(fileName string) bool {
 		return true
 	}
 	return false
+}
+
+//
+// input a reader(gbk), output a reader(utf-8)
+//
+func gbk2utf8(charset string, r io.Reader) (io.Reader, error) {
+	if charset != "gb2312" {
+		return nil, fmt.Errorf("Unsupported charset")
+	}
+
+	decoder := mahonia.NewDecoder("gbk")
+	reader := decoder.NewReader(r)
+	return reader, nil
 }
 
 //
@@ -396,25 +433,18 @@ func (c *CNKIDownloader) Auth() error {
 //
 // search papers
 //
-func (c *CNKIDownloader) Search(keyword string, search SearchType, filter FilterType, page int) (*CNKISearchResult, error) {
+func (c *CNKIDownloader) Search(keyword string, option *searchOption, page int) (*CNKISearchResult, error) {
 	const (
 		queryDomain = "http://api.cnki.net"
 		queryString = "fields=&filter=%s+eq+%s"
 	)
 
 	var (
-		searchDef string
-		furl      string
+		furl string
 	)
 
 	if page <= 0 {
 		return nil, fmt.Errorf("Invalid page")
-	}
-
-	if search == SearchBySubject {
-		searchDef = "cnki:subject"
-	} else {
-		return nil, fmt.Errorf("Unsupported search type %d", search)
 	}
 
 	//
@@ -423,12 +453,12 @@ func (c *CNKIDownloader) Search(keyword string, search SearchType, filter Filter
 	param := make(url.Values)
 
 	param.Add("fields", "dc:title,cnki:issue,cnki:year,cnki:downloadedtime,dc:creator,cnki:citedtime,dc:source,dc:contributor,dc:source@py,dc:date,cnki:clccode,dc:description")
-	param.Add("filter", fmt.Sprintf("%s eq %s", searchDef, keyword))
-	param.Add("order", "cnki:downloadedtime+desc")
+	param.Add("filter", fmt.Sprintf("%s eq %s", option.filter, keyword))
+	param.Add("order", fmt.Sprintf("%s+desc", option.order))
 	if page > 1 {
 		param.Add("page", fmt.Sprintf("%d", page))
 	}
-	furl = fmt.Sprintf("%s%s?%s", queryDomain, searchFilterPaths[filter], param.Encode())
+	furl = fmt.Sprintf("%s%s?%s", queryDomain, option.databse, param.Encode())
 
 	req, err := http.NewRequest("GET", furl, nil)
 	if err != nil {
@@ -498,12 +528,11 @@ func (c *CNKIDownloader) Search(keyword string, search SearchType, filter Filter
 //
 // get first page
 //
-func (c *CNKIDownloader) SearchFirst(keyword string, search SearchType, filter FilterType) (*CNKISearchResult, error) {
-	s, err := c.Search(keyword, search, filter, 1)
+func (c *CNKIDownloader) SearchFirst(keyword string, option *searchOption) (*CNKISearchResult, error) {
+	s, err := c.Search(keyword, option, 1)
 	if err == nil {
 		c.search_cache.keyword = keyword
-		c.search_cache.stype = search
-		c.search_cache.sfilter = filter
+		c.search_cache.option = option
 		c.search_cache.result_list = new(list.List)
 		c.search_cache.result_list.Init()
 		c.search_cache.current = c.search_cache.result_list.PushBack(s)
@@ -544,7 +573,7 @@ func (c *CNKIDownloader) SearchNext(pageNum int) (*CNKISearchResult, error) {
 		//
 		// next page is invalid , we should query from server
 		//
-		s, err := c.Search(c.search_cache.keyword, c.search_cache.stype, c.search_cache.sfilter, pageNum)
+		s, err := c.Search(c.search_cache.keyword, c.search_cache.option, pageNum)
 		if err == nil {
 			c.search_cache.current = c.search_cache.result_list.PushBack(s)
 		}
@@ -594,8 +623,7 @@ func (c *CNKIDownloader) SearchStop() {
 	c.search_cache.keyword = ""
 	c.search_cache.current = nil
 	c.search_cache.result_list = nil
-	c.search_cache.sfilter = FilterType(0)
-	c.search_cache.stype = SearchType(0)
+	c.search_cache.option = nil
 }
 
 //
@@ -916,34 +944,46 @@ func printArticles(page int, articles []Article) {
 //
 // required for serach options
 //
-func getSearchOpt() (SearchType, FilterType) {
-	var (
-		search SearchType = SearchBySubject
-		filter FilterType = SearchFilterAll
-	)
+func getSearchOpt() *searchOption {
 
-	for {
-		color.White("Please select search range:\n")
-		for k := SearchFilterAll; k <= SearchConference; k++ {
-			fmt.Fprintf(color.Output, "\t %s: %s\n", color.CyanString("%d", k), searchFilterHints[k])
-		}
+	seletor := func(min, max, defaultValue int8, hint string, optHints map[int8]string) int8 {
+		for {
+			fmt.Fprintf(color.Output, "%s:\n", color.GreenString(hint))
+			for k := min; k <= max; k++ {
+				if k == defaultValue {
 
-		fmt.Fprintf(color.Output, "$ %s", color.CyanString("select: "))
-		s := getInputString()
-		if len(s) > 0 {
-			selected, err := strconv.ParseInt(s, 16, 32)
-			if err != nil || selected < int64(SearchFilterAll) || selected > int64(SearchConference) {
-				color.Red("Invalid selection\n")
-				continue
+					fmt.Fprintf(color.Output, "\t %s: %s (%s)\n", color.CyanString("%d", k), optHints[k], color.GreenString("DEFAULT"))
+				} else {
+					fmt.Fprintf(color.Output, "\t %s: %s\n", color.CyanString("%d", k), optHints[k])
+				}
 			}
 
-			filter = FilterType(selected)
+			fmt.Fprintf(color.Output, "$ %s", color.CyanString("select: "))
+			s := getInputString()
+			if len(s) > 0 {
+				selected, err := strconv.ParseInt(s, 16, 32)
+				if err != nil || selected < int64(min) || selected > int64(max) {
+					color.Red("Invalid selection\n")
+					continue
+				}
+				return int8(selected)
+			}
+			break
 		}
-
-		break
+		return defaultValue
 	}
 
-	return search, filter
+	// now , let the user to choose
+	filter := seletor(SearchBySubject, SearchByKeyword, SearchBySubject, "What's you input means?", searchFilterHints)
+	database := seletor(SearchAllDoc, SearchConference, SearchAllDoc, "Which database you wanna query?", searchRangeHints)
+	order := seletor(OrderByDownloadedTime, OrderBySubject, OrderByDownloadedTime, "How should I sort the result?", searchOrderHints)
+
+	opt := &searchOption{
+		filter:  searchFilterDefs[filter],
+		databse: searchRangeDefs[database],
+		order:   searchOrderDefs[order],
+	}
+	return opt
 }
 
 //
@@ -1078,7 +1118,6 @@ func main() {
 	color.Cyan("***************************************************************************\n")
 	color.Cyan("****  Welcome use CNKI-Downloader, Let's fuck these knowledge mongers  ****\n")
 	color.Cyan("****                            Good luck.                             ****\n")
-	color.Cyan("****                                                                   ****\n")
 	color.Cyan("***************************************************************************\n")
 
 	defer func() {
@@ -1132,9 +1171,9 @@ func main() {
 		//
 		// search first page
 		//
-		search, filter := getSearchOpt()
+		opt := getSearchOpt()
 
-		result, err := downloader.SearchFirst(s, search, filter)
+		result, err := downloader.SearchFirst(s, opt)
 		if err != nil {
 			fmt.Fprintf(color.Output, "Search %s %s (%s)\n", "zzr", color.RedString("Failure"), err.Error())
 			continue
