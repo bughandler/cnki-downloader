@@ -40,7 +40,7 @@ type ArticleInfo struct {
 	Issue         string
 	DownloadCount int
 	RefCount      int
-	CreateTime    time.Time
+	CreateTime    string
 	Creator       []string
 	SourceName    string
 	SourceAlias   string
@@ -110,8 +110,8 @@ type appUpdateInfo struct {
 
 const (
 	MajorVersion         = 0
-	MinorVersion         = 5
-	VersionString        = "0.5-alpha"
+	MinorVersion         = 6
+	VersionString        = "0.6-alpha"
 	VersionCheckUrl      = "https://raw.githubusercontent.com/amyhaber/cnki-downloader/master/last-release.json"
 	FixedDownloadViewUrl = "https://github.com/amyhaber/cnki-downloader#download"
 	MaxDownloadThread    = 4
@@ -305,10 +305,7 @@ func (a *Article) analyze() {
 			}
 		case "dc:date":
 			{
-				t, err := time.Parse("2006-01-02", attr.Value)
-				if err != nil {
-					a.Information.CreateTime = t
-				}
+				a.Information.CreateTime = attr.Value
 			}
 		case "dc:description":
 			{
@@ -668,13 +665,12 @@ func (c *CNKIDownloader) getFile(url string, filename string, filesize int) erro
 	//
 	blockSize := filesize / MaxDownloadThread
 	blockRemain := filesize % MaxDownloadThread
-	waitDone := new(sync.WaitGroup)
+	waitDone, syncLocker := new(sync.WaitGroup), new(sync.Mutex)
 
 	//
 	// ready for receiving error that occurred by goroutines
 	//
-	isErrorOccurred := int32(0)
-	occuredError := fmt.Errorf("")
+	isErrorOccurred, occuredError := int32(0), fmt.Errorf("")
 
 	for i := 0; i < MaxDownloadThread; i++ {
 
@@ -690,7 +686,7 @@ func (c *CNKIDownloader) getFile(url string, filename string, filesize int) erro
 		//
 		// download part of data with a new goroutine
 		//
-		go func(from, to int, file *os.File, progress *pb.ProgressBar, errorIndicator *int32, errorReceiver error, waitEvent *sync.WaitGroup) {
+		go func(from, to int, file *os.File, progress *pb.ProgressBar, errorIndicator *int32, errorReceiver error, locker *sync.Mutex, waitEvent *sync.WaitGroup) {
 			defer waitEvent.Done()
 
 			//
@@ -743,7 +739,9 @@ func (c *CNKIDownloader) getFile(url string, filename string, filesize int) erro
 
 				n, err := io.CopyN(data, resp.Body, 4096)
 				if n > 0 {
+					locker.Lock()
 					progress.Add(int(n))
+					locker.Unlock()
 				}
 
 				if err == io.EOF {
@@ -759,10 +757,12 @@ func (c *CNKIDownloader) getFile(url string, filename string, filesize int) erro
 			//
 			// flush into disk
 			//
+			locker.Lock()
 			file.WriteAt(data.Bytes(), int64(from))
 			file.Sync()
+			locker.Unlock()
 
-		}(fromOff, endOff, output, bar, &isErrorOccurred, occuredError, waitDone)
+		}(fromOff, endOff, output, bar, &isErrorOccurred, occuredError, syncLocker, waitDone)
 	}
 
 	//
@@ -1212,7 +1212,7 @@ func main() {
 				}
 			case "info":
 				{
-					color.Cyan("  page size: %d\n page index: %d\ntotal pages: %d\n", psize, pindex, pcount)
+					color.White("  page size: %d\n page index: %d\ntotal pages: %d\n", psize, pindex, pcount)
 				}
 			case "next":
 				{
@@ -1256,7 +1256,7 @@ func main() {
 					fmt.Fprintf(color.Output, "*       PAGE: %s\n", color.WhiteString("%d", pindex))
 					fmt.Fprintf(color.Output, "*         ID: %s\n", color.WhiteString("%d", id+1))
 					fmt.Fprintf(color.Output, "*      Title: %s\n", color.WhiteString(entry.Information.Title))
-					fmt.Fprintf(color.Output, "*    Created: %s\n", color.WhiteString(entry.Information.CreateTime.String()))
+					fmt.Fprintf(color.Output, "*    Created: %s\n", color.WhiteString(entry.Information.CreateTime))
 					fmt.Fprintf(color.Output, "*    Authors: %s\n", color.GreenString(strings.Join(entry.Information.Creator, " ")))
 					fmt.Fprintf(color.Output, "*     Source: %s\n", color.GreenString("%s(%s)", entry.Information.SourceName, entry.Information.SourceAlias))
 					fmt.Fprintf(color.Output, "*       Code: %s\n", color.WhiteString("%s.%s", entry.Information.ClassifyName, entry.Information.ClassifyCode))
@@ -1305,7 +1305,7 @@ func main() {
 			case "break":
 				{
 					downloader.SearchStop()
-					color.Cyan("Break out.\n")
+					color.YellowString("Break out.\n")
 					out = true
 				}
 			}
