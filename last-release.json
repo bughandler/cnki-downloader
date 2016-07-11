@@ -12,7 +12,9 @@
 		"fix: other minor update",
 		" If your browser couldn't be opened automatically",
 		" Please visiti the project page to downloader",
-		" https://github.com/amyhaber/cnki-downloader#download"
+		" ",
+		" https://github.com/amyhaber/cnki-downloader#download",
+		" "
 	],
 	"urls": {
 		"win": "https://github.com/amyhaber/cnki-downloader/releases/download/v0.6-alpha/cnki-downloader-windows.zip",
