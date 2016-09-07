@@ -904,7 +904,7 @@ func (c *CNKIDownloader) Download(paper *Article) (string, error) {
 	if err != nil {
 		return "", nil
 	}
-	fullName := filepath.Join(currentDir, info.Filename)
+	fullName := filepath.Join(currentDir, paper.Information.Title+".caj")
 
 	fmt.Printf("Downloading... total (%d) bytes\n", info.Size)
 	err = c.getFile(info.DownloadUrl[0], fullName, info.Size)
@@ -1305,7 +1305,7 @@ func main() {
 			case "break":
 				{
 					downloader.SearchStop()
-					color.YellowString("Break out.\n")
+					color.Yellow("Break out.\n")
 					out = true
 				}
 			}
