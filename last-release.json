@@ -1,17 +1,24 @@
 {
 	"major": 0,
-	"minor": 3,
+	"minor": 6,
 	"is_alpha": true,
 	"is_required": true,
-	"time": "2016-6-21 13:29",
+	"time": "2016-7-11 23:10",
 	"reasons":[
-		"a simple update system",
-		"support progress bar when downloading a document",
-		"more user friendly console UI"
+		"add: now can identify and rename PDF document automatically",
+		"add: now support more search options (range, filter, order)",
+		"fix: a bug about multi-thread downloading",
+		"fix: adjust some text output",
+		"fix: other minor update",
+		" If your browser couldn't be opened automatically",
+		" Please visit the project page to download",
+		" ",
+		" https://github.com/amyhaber/cnki-downloader#download",
+		" "
 	],
 	"urls": {
-		"win": "https://github.com/amyhaber/cnki-downloader/releases/download/v0.3-alpha/cnki-downloader-windows.zip",
-		"mac": "https://github.com/amyhaber/cnki-downloader/releases/download/v0.3-alpha/cnki-downloader-darwin.zip",
-		"linux":"https://github.com/amyhaber/cnki-downloader/releases/download/v0.3-alpha/cnki-downloader-linux.zip"
+		"win": "https://github.com/amyhaber/cnki-downloader/releases/download/v0.6-alpha/cnki-downloader-windows.zip",
+		"mac": "https://github.com/amyhaber/cnki-downloader/releases/download/v0.6-alpha/cnki-downloader-darwin.zip",
+		"linux":"https://github.com/amyhaber/cnki-downloader/releases/download/v0.6-alpha/cnki-downloader-linux.zip"
 	}
 }
