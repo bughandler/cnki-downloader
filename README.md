@@ -6,6 +6,7 @@ BTW:
 - *read the [notice](https://github.com/amyhaber/cnki-downloader#notice) before you get start*
 - *no matter what this project always will die*
 - *star please* :)
+- *若出现http response 400错误，请坐等CNKI修复其接口服务器，若CNKI方面拒不修复，则此软件失效*（摊手状）
 
 # Download
 The Last Release (2016-7-11 **v0.6-alpha**):
