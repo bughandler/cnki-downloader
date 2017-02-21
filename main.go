@@ -110,8 +110,8 @@ type appUpdateInfo struct {
 
 const (
 	MajorVersion         = 0
-	MinorVersion         = 6
-	VersionString        = "0.6-alpha"
+	MinorVersion         = 7
+	VersionString        = "0.7-alpha"
 	VersionCheckUrl      = "https://raw.githubusercontent.com/amyhaber/cnki-downloader/master/last-release.json"
 	FixedDownloadViewUrl = "https://github.com/amyhaber/cnki-downloader#download"
 	MaxDownloadThread    = 4
@@ -1129,8 +1129,8 @@ func main() {
 	//
 	fmt.Println()
 	fmt.Println("** NOTE: if you cannot download any document, maybe the service of")
-	fmt.Println("**       CNKI is unavailable again, in this situation, nothing ")
-	fmt.Println("**       we can do but wait, please do not open a issue on GitHub, thanks")
+	fmt.Println("**       CNKI is unavailable again, in this situation, nothing we")
+	fmt.Println("**       can do but wait, DO NOT open an issue on GitHub, thx")
 	fmt.Println("**")
 
 	//
