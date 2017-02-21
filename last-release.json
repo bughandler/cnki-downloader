@@ -3,7 +3,7 @@
 	"minor": 7,
 	"is_alpha": true,
 	"is_required": false,
-	"time": "2017-7-21 23:26",
+	"time": "2017-2-21 23:26",
 	"reasons":[
 		"add: use paper's tile as file name instead of the internal name",
 		"fix: the crashing problem when searching fail",
