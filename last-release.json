@@ -1,24 +1,17 @@
 {
 	"major": 0,
-	"minor": 6,
+	"minor": 7,
 	"is_alpha": true,
-	"is_required": true,
-	"time": "2016-7-11 23:10",
+	"is_required": false,
+	"time": "2017-7-21 23:26",
 	"reasons":[
-		"add: now can identify and rename PDF document automatically",
-		"add: now support more search options (range, filter, order)",
-		"fix: a bug about multi-thread downloading",
-		"fix: adjust some text output",
-		"fix: other minor update",
-		" If your browser couldn't be opened automatically",
-		" Please visit the project page to download",
-		" ",
-		" https://github.com/amyhaber/cnki-downloader#download",
-		" "
+		"add: use paper's tile as file name instead of the internal name",
+		"fix: the crashing problem when searching fail",
+		"fix: other minor update"
 	],
 	"urls": {
-		"win": "https://github.com/amyhaber/cnki-downloader/releases/download/v0.6-alpha/cnki-downloader-windows.zip",
-		"mac": "https://github.com/amyhaber/cnki-downloader/releases/download/v0.6-alpha/cnki-downloader-darwin.zip",
-		"linux":"https://github.com/amyhaber/cnki-downloader/releases/download/v0.6-alpha/cnki-downloader-linux.zip"
+		"win": "https://github.com/amyhaber/cnki-downloader/releases/download/v0.7-alpha/cnki-downloader-windows.zip",
+		"mac": "https://github.com/amyhaber/cnki-downloader/releases/download/v0.7-alpha/cnki-downloader-darwin.zip",
+		"linux":"https://github.com/amyhaber/cnki-downloader/releases/download/v0.7-alpha/cnki-downloader-linux.zip"
 	}
 }
