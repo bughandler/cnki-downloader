@@ -1031,7 +1031,7 @@ func update() (allowContinue bool) {
 	info, err := getUpdateInfo()
 	if err == nil {
 		newVersion := false
-		if info.Major > MajorVersion || info.Minor > MinorVersion {
+		if info.Major > MajorVersion || (info.Major == MajorVersion && info.Minor > MinorVersion) {
 			newVersion = true
 		}
 
@@ -1063,7 +1063,7 @@ func update() (allowContinue bool) {
 			if info.IsRequired {
 				fmt.Fprintf(color.Output, "** You %s update this version, or you cannot continue to use current program\n", color.RedString("have to"))
 			} else {
-				fmt.Println("** This version is not nacessary to be update, but I recommand you to update now")
+				fmt.Println("** This version is not necessary to be update, but I recommand you guys to update now")
 			}
 
 			fmt.Printf("** update now? [y/n]: ")
@@ -1101,7 +1101,7 @@ func update() (allowContinue bool) {
 			}
 
 		} else {
-			fmt.Println("** already is the last version")
+			fmt.Println("** already is the latest version")
 		}
 
 	} else {
@@ -1115,10 +1115,10 @@ func update() (allowContinue bool) {
 // lord commander
 //
 func main() {
-	color.Cyan("***************************************************************************\n")
-	color.Cyan("****  Welcome use CNKI-Downloader, Let's fuck these knowledge mongers  ****\n")
-	color.Cyan("****                            Good luck.                             ****\n")
-	color.Cyan("***************************************************************************\n")
+	color.Cyan("******************************************************************************\n")
+	color.Cyan("****  Welcome to use CNKI-Downloader, Let's fuck these knowledge mongers  ****\n")
+	color.Cyan("****                            Good luck.                                ****\n")
+	color.Cyan("******************************************************************************\n")
 
 	defer func() {
 		color.Yellow("** Bye.\n")
