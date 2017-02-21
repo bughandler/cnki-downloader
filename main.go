@@ -534,7 +534,7 @@ func (c *CNKIDownloader) SearchFirst(keyword string, option *searchOption) (*CNK
 		c.search_cache.result_list.Init()
 		c.search_cache.current = c.search_cache.result_list.PushBack(s)
 	}
-	return s, nil
+	return s, err
 }
 
 //
@@ -1175,7 +1175,7 @@ func main() {
 
 		result, err := downloader.SearchFirst(s, opt)
 		if err != nil {
-			fmt.Fprintf(color.Output, "Search %s %s (%s)\n", "zzr", color.RedString("Failure"), err.Error())
+			fmt.Fprintf(color.Output, "Search '%s' %s (error: %s)\n", s, color.RedString("fail"), err.Error())
 			continue
 		}
 		printArticles(1, result.GetPageData())
