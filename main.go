@@ -110,10 +110,10 @@ type appUpdateInfo struct {
 
 const (
 	MajorVersion         = 0
-	MinorVersion         = 7
-	VersionString        = "0.7-alpha"
+	MinorVersion         = 8
+	VersionString        = "0.8-alpha"
 	VersionCheckUrl      = "https://raw.githubusercontent.com/amyhaber/cnki-downloader/master/last-release.json"
-	FixedDownloadViewUrl = "https://github.com/amyhaber/cnki-downloader#download"
+	FixedDownloadViewUrl = "https://github.com/amyhaber/cnki-downloader"
 	MaxDownloadThread    = 4
 )
 
@@ -184,6 +184,18 @@ var (
 		OrderBySubject:        "dc:title",
 	}
 )
+
+//
+// replace all illegal chars to a underline char
+//
+func makeSafeFileName(fileName string) string {
+	return strings.Map(func(r rune) rune {
+		if strings.IndexRune(`/\:*?"><|`, r) != -1 {
+			return '_'
+		}
+		return r
+	}, fileName)
+}
 
 //
 // get input string from console
@@ -884,13 +896,13 @@ func (c *CNKIDownloader) getInfoURL(instance string) (string, error) {
 //
 func (c *CNKIDownloader) Download(paper *Article) (string, error) {
 
-	url, err := c.getInfoURL(paper.Instance)
+	infoUrl, err := c.getInfoURL(paper.Instance)
 	if err != nil {
 		return "", err
 	}
 	fmt.Println("Document info url confirmed")
 
-	info, err := c.getInfo(url)
+	info, err := c.getInfo(infoUrl)
 	if err != nil {
 		return "", err
 	}
@@ -904,7 +916,7 @@ func (c *CNKIDownloader) Download(paper *Article) (string, error) {
 	if err != nil {
 		return "", nil
 	}
-	fullName := filepath.Join(currentDir, paper.Information.Title+".caj")
+	fullName := filepath.Join(currentDir, makeSafeFileName(paper.Information.Title)+".caj")
 
 	fmt.Printf("Downloading... total (%d) bytes\n", info.Size)
 	err = c.getFile(info.DownloadUrl[0], fullName, info.Size)
