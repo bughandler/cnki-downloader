@@ -1,17 +1,15 @@
 {
 	"major": 0,
-	"minor": 7,
+	"minor": 8,
 	"is_alpha": true,
-	"is_required": false,
-	"time": "2017-2-21 23:26",
+	"is_required": true,
+	"time": "2017-3-11 18:24",
 	"reasons":[
-		"add: use paper's tile as file name instead of the internal name",
-		"fix: the crashing problem when searching fail",
-		"fix: other minor update"
+		"fix: cannot save paper when it's title contains illegal character"
 	],
 	"urls": {
-		"win": "https://github.com/amyhaber/cnki-downloader/releases/download/v0.7-alpha/cnki-downloader-windows.zip",
-		"mac": "https://github.com/amyhaber/cnki-downloader/releases/download/v0.7-alpha/cnki-downloader-darwin.zip",
-		"linux":"https://github.com/amyhaber/cnki-downloader/releases/download/v0.7-alpha/cnki-downloader-linux.zip"
+		"win": "https://github.com/amyhaber/cnki-downloader/releases/download/v0.8-alpha/cnki-downloader-windows.zip",
+		"mac": "https://github.com/amyhaber/cnki-downloader/releases/download/v0.8-alpha/cnki-downloader-darwin.zip",
+		"linux":"https://github.com/amyhaber/cnki-downloader/releases/download/v0.8-alpha/cnki-downloader-linux.zip"
 	}
 }
