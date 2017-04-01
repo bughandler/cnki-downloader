@@ -33,7 +33,7 @@ Here is a gif picture, you can follow it, and it's really easy
 ![image](https://github.com/amyhaber/cnki-downloader/blob/master/screenshots/showcase2.gif)
 
 # Notice
-CNKI http service could be unvailable in anytime (or forever, I don't know), you guys should know that kind of projects
+CNKI http service could be unavailable in anytime (or forever, I don't know), you guys should know that kind of projects
 always are bunch of **SHIT**, you can't expect too much
 
 # Future Work
