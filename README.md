@@ -1,6 +1,6 @@
 # Overview
 This is a free downloader for CNKI, you can search, download papers , journals, conference records in caj/pdf/.. formats (that 
-means you should use **CAJViewer** to open the document).
+means you should use [**CAJViewer**](http://www.portablesoft.org/cajviewer-lite/) to open the document).
 
 BTW:
 - *read the [notice](https://github.com/amyhaber/cnki-downloader#notice) before you get start*
