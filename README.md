@@ -3,7 +3,6 @@ This is a free downloader for CNKI, you can search, download papers , journals, 
 means you should use [**CAJViewer**](http://www.portablesoft.org/cajviewer-lite/) to open the document).
 
 BTW:
-- *read the [notice](https://github.com/amyhaber/cnki-downloader#notice) before you get start*
 - *no matter what this project always will die*
 - *star please* :)
 
@@ -13,29 +12,31 @@ The Latest Release (2017-3-11 **v0.8-alpha**):
 + [Linux Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v0.8-alpha/cnki-downloader-linux.zip)
 + [Mac Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v0.8-alpha/cnki-downloader-darwin.zip)
 
-# Q&A
+# FAQ
+- Q：为什么不开发/增加XXX功能？
 
-- Q：为什么下载时出现http response 400？
+  A：这只是随手写的一个工具，并没有考虑做成完善的东西，如之前所言，这程序所用的接口迟早会被封的，所以将就用吧
 
-  A：CNKI的土豆服务器又炸了，请坐等他们修复
+- Q：为什么检索不到XXX文章？
 
-- Q： 为什么无法解压安装包？
+  A：服务器上相应的条目被下线了，再次重申，这程序所用的接口访问的**不是知网主库**
+  
+- Q：为什么下载时出现Bad Request 400？
 
-  A： 请使用最新的解压软件，如7zip等
+  A：知网的土豆服务器又炸了，请坐等他们修复
 
 - Q：为什么有些文档是PDF格式，有些是CAJ？
 
-  A：讲道理，源码里用的接口是逆出来的，油猴脚本之类的并没什么用
+  A：此程序所使用的接口无法选择文档格式，所以只能下到什么算什么
+
+- Q： 为什么无法解压程序包？
+
+  A： 请使用最新的解压软件，如7zip等
 
 # Usage
 Here is a gif picture, you can follow it, and it's really easy
 
 ![image](https://github.com/amyhaber/cnki-downloader/blob/master/screenshots/showcase2.gif)
 
-# Notice
-CNKI http service could be unavailable in anytime (or forever, I don't know), you guys should know that kind of projects
-always are bunch of **SHIT**, you can't expect too much
-
 # Future Work
-+ A more user friendly UI
 + Fix bugs
