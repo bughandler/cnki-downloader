@@ -1,3 +1,13 @@
+# Notice
+各位用户，承蒙各位厚爱，如此小巧的一个工具软件能得到这么多的stars，但由于不可抗力（接口服务器失效），所有此工具已经失去了搜索下载文献的能力，
+在此对各位表示抱歉。
+
+但是，如果有同学能获取到一张首都图书馆的借阅卡（匿名最好），请提交一个issue与我取得联系，我将尽量恢复此软件的功能。
+
+再次感谢大家长久以来的支持，以及对你造成的不便表示抱歉，以上。
+
+
+
 # Overview
 This is a free downloader for CNKI, you can search, download papers , journals, conference records in caj/pdf/.. formats (that 
 means you should use [**CAJViewer**](http://www.portablesoft.org/cajviewer-lite/) to open the document).
@@ -8,9 +18,9 @@ BTW:
 
 # Download
 The Latest Release (2017-3-11 **v0.8-alpha**):
-+ [Windows Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v0.8-alpha/cnki-downloader-windows.zip)
-+ [Linux Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v0.8-alpha/cnki-downloader-linux.zip)
-+ [Mac Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v0.8-alpha/cnki-downloader-darwin.zip)
++ ~~~[Windows Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v0.8-alpha/cnki-downloader-windows.zip)~~~
++ ~~~[Linux Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v0.8-alpha/cnki-downloader-linux.zip)~~~
++ ~~~[Mac Portable](https://github.com/amyhaber/cnki-downloader/releases/download/v0.8-alpha/cnki-downloader-darwin.zip)~~~
 
 # FAQ
 - Q：**为什么不开发/增加XXX功能？**
