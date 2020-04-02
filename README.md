@@ -36,7 +36,7 @@ The Latest Release (2017-3-11 **v0.8-alpha**):
 # Usage
 Here is a gif picture, you can follow it, and it's really easy
 
-![image](https://github.com/amyhaber/cnki-downloader/blob/master/screenshots/showcase2.gif)
+![image](https://github.com/amyhaber/cnki-downloader/blob/backup/screenshots/showcase2.gif)
 
 # Future Work
 + Fix bugs
