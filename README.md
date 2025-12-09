@@ -1,9 +1,9 @@
 # Overview
-This is a free downloader for CNKI, you can search, download papers , journals, conference records in caj/pdf/.. formats (that 
+This is a free downloader for CNKI, you can search, download papers, journals, conference records in caj/pdf/.. formats (that 
 means you should use [**CAJViewer**](http://www.portablesoft.org/cajviewer-lite/) to open the document).
 
 BTW:
-- *no matter what this project always will die*
+- *no matter what, this project will always die*
 - *star please* :)
 
 # Download
@@ -34,9 +34,9 @@ The Latest Release (2017-3-11 **v0.8-alpha**):
   A： 请使用最新的解压软件，如7zip等
 
 # Usage
-Here is a gif picture, you can follow it, and it's really easy
+Here is a gif, you can follow it, and it's really easy
 
-![image](https://github.com/amyhaber/cnki-downloader/blob/backup/screenshots/showcase2.gif)
+![image](screenshots/showcase2.gif)
 
 # Future Work
 + Fix bugs
